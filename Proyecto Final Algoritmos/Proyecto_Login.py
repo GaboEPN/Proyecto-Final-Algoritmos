@@ -51,3 +51,56 @@ def login():
         if us["user"] == u and us["pass"] == p:
             return us["rol"], u
     return None, None
+
+# ======================================================
+# PARTE B: LOGÍSTICA Y GRAFOS (PERSONA 2)
+# ======================================================
+def cargar_rutas_grafo():
+    global grafo
+    n = len(centros)
+    grafo = [[0] * n for _ in range(n)]
+    if os.path.exists(RUTAS_FILE):
+        with open(RUTAS_FILE, "r") as f:
+            for l in f:
+                if l.strip():
+                    a, b, c = map(int, l.strip().split(","))
+                    if a < n and b < n:
+                        grafo[a][b] = c
+                        grafo[b][a] = c
+
+def dijkstra(origen):
+    n = len(grafo)
+    dist = [float("inf")] * n
+    dist[origen] = 0
+    pq = [(0, origen)]
+    while pq:
+        costo, u = heapq.heappop(pq)
+        if costo > dist[u]: continue
+        for v in range(n):
+            if grafo[u][v] > 0:
+                nd = costo + grafo[u][v]
+                if nd < dist[v]:
+                    dist[v] = nd
+                    heapq.heappush(pq, (nd, v))
+    return dist
+
+def bfs_centros_cercanos(inicio_id):
+    visitados = [False] * len(centros)
+    cola = [inicio_id]
+    visitados[inicio_id] = True
+    resultado = []
+    while cola:
+        u = cola.pop(0)
+        resultado.append(centros[u]["nombre"])
+        for v in range(len(grafo)):
+            if grafo[u][v] > 0 and not visitados[v]:
+                visitados[v] = True
+                cola.append(v)
+    return resultado
+
+def dfs_explorar_rutas(u, visitados):
+    visitados[u] = True
+    print(f"-> Explorando: {centros[u]['nombre']}")
+    for v in range(len(grafo)):
+        if grafo[u][v] > 0 and not visitados[v]:
+            dfs_explorar_rutas(v, visitados)
