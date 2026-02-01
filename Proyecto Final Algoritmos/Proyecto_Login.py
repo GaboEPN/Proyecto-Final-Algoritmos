@@ -52,9 +52,7 @@ def login():
             return us["rol"], u
     return None, None
 
-# ======================================================
-# PARTE B: LOGÍSTICA Y GRAFOS (PERSONA 2)
-# ======================================================
+
 def cargar_rutas_grafo():
     global grafo
     n = len(centros)
@@ -104,3 +102,43 @@ def dfs_explorar_rutas(u, visitados):
     for v in range(len(grafo)):
         if grafo[u][v] > 0 and not visitados[v]:
             dfs_explorar_rutas(v, visitados)
+            
+class NodoArbol:
+    def __init__(self, nombre):
+        self.nombre = nombre
+        self.hijos = []
+
+def cargar_centros():
+    centros.clear()
+    if os.path.exists(CENTROS_FILE):
+        with open(CENTROS_FILE, "r") as f:
+            for l in f:
+                if l.strip():
+                    i, n, r = l.strip().split(",")
+                    centros.append({"id": int(i), "nombre": n, "region": r})
+
+def construir_arbol_regiones():
+    raiz = NodoArbol("Ecuador")
+    regiones = {}
+    for c in centros:
+        reg = c["region"]
+        if reg not in regiones:
+            nodo_reg = NodoArbol(reg)
+            raiz.hijos.append(nodo_reg)
+            regiones[reg] = nodo_reg
+        regiones[reg].hijos.append(NodoArbol(c["nombre"]))
+    return raiz
+
+def mostrar_arbol(nodo, nivel=0):
+    print("  " * nivel + "|--" + nodo.nombre)
+    for hijo in nodo.hijos:
+        mostrar_arbol(hijo, nivel + 1)
+
+def quick_sort_centros(lista):
+    if len(lista) <= 1:
+        return lista
+    pivote = lista[len(lista) // 2]["nombre"]
+    izq = [x for x in lista if x["nombre"] < pivote]
+    medio = [x for x in lista if x["nombre"] == pivote]
+    der = [x for x in lista if x["nombre"] > pivote]
+    return quick_sort_centros(izq) + medio + quick_sort_centros(der)            
