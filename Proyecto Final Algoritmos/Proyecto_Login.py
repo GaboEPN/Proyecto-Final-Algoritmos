@@ -247,7 +247,7 @@ cargar_centros()
 cargar_grafo()
 
 while True:
-    print("\n=== POLIDELIVERY ===")
+    print("\n=== POLIDELIVERY EPN ===")
     op=input("1 Registrar\n2 Login\n0 Salir\n")
     if op=="1": registrar()
     elif op=="2":
@@ -255,3 +255,4 @@ while True:
         if rol=="admin": menu_admin()
         elif rol=="cliente": menu_cliente(u)
     elif op=="0": break
+
