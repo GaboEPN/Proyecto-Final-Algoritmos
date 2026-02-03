@@ -5,140 +5,250 @@ USUARIOS_FILE = "usuarios.txt"
 CENTROS_FILE = "centros.txt"
 RUTAS_FILE = "rutas.txt"
 
-usuarios = []
-centros = []
-grafo = []
+usuarios=[]
+centros=[]
+grafo=[]
 
+# ======================================================
+# ARCHIVOS
+# ======================================================
 def inicializar_archivos():
-    if not os.path.exists(USUARIOS_FILE):
-        open(USUARIOS_FILE, "w").close()
-    if not os.path.exists(CENTROS_FILE):
-        open(CENTROS_FILE, "w").close()
-    if not os.path.exists(RUTAS_FILE):
-        open(RUTAS_FILE, "w").close()
+    for f in [USUARIOS_FILE,CENTROS_FILE,RUTAS_FILE]:
+        if not os.path.exists(f):
+            open(f,"w").close()
 
+# ======================================================
+# USUARIOS
+# ======================================================
 def cargar_usuarios():
     usuarios.clear()
-    with open(USUARIOS_FILE, "r") as f:
+    with open(USUARIOS_FILE) as f:
         for l in f:
             if l.strip():
-                n, a, c, e, u, p, r = l.strip().split(",")
-                usuarios.append({"user": u, "pass": p, "rol": r})
+                n,a,c,e,u,p,r=l.strip().split(",")
+                usuarios.append({"user":u,"pass":p,"rol":r})
 
 def password_segura(p):
-    return any(c.isupper() for c in p) and any(c.islower() for c in p) and any(c.isdigit() for c in p)
+    return any(c.islower() for c in p) and any(c.isupper() for c in p) and any(c.isdigit() for c in p)
 
-def registrar_cliente():
-    print("\n--- REGISTRO ---")
-    nom = input("Nombres: ")
-    ape = input("Apellidos: ")
-    ced = input("Identificación: ")
-    eda = input("Edad: ")
-    usr = input("Usuario: ")
-    pas = input("Contraseña: ")
-    if not password_segura(pas):
-        print("Error: Contraseña debe tener Mayúscula, Minúscula y Número.")
-        return
-    with open(USUARIOS_FILE, "a") as f:
-        f.write(f"{nom},{ape},{ced},{eda},{usr},{pas},cliente\n")
-    print("Usuario registrado.")
+def registrar():
+    n=input("Nombres: "); a=input("Apellidos: ")
+    c=input("ID: "); e=input("Edad: ")
+    u=input("Usuario: "); p=input("Contraseña: ")
+    if not password_segura(p):
+        print("Contraseña insegura"); return
+    with open(USUARIOS_FILE,"a") as f:
+        f.write(f"{n},{a},{c},{e},{u},{p},cliente\n")
 
 def login():
     cargar_usuarios()
-    u = input("Usuario: ")
-    p = input("Password: ")
+    u=input("Usuario: "); p=input("Pass: ")
     for us in usuarios:
-        if us["user"] == u and us["pass"] == p:
-            return us["rol"], u
-    return None, None
+        if us["user"]==u and us["pass"]==p:
+            return us["rol"],u
+    return None,None
 
-
-def cargar_rutas_grafo():
-    global grafo
-    n = len(centros)
-    grafo = [[0] * n for _ in range(n)]
-    if os.path.exists(RUTAS_FILE):
-        with open(RUTAS_FILE, "r") as f:
-            for l in f:
-                if l.strip():
-                    a, b, c = map(int, l.strip().split(","))
-                    if a < n and b < n:
-                        grafo[a][b] = c
-                        grafo[b][a] = c
-
-def dijkstra(origen):
-    n = len(grafo)
-    dist = [float("inf")] * n
-    dist[origen] = 0
-    pq = [(0, origen)]
-    while pq:
-        costo, u = heapq.heappop(pq)
-        if costo > dist[u]: continue
-        for v in range(n):
-            if grafo[u][v] > 0:
-                nd = costo + grafo[u][v]
-                if nd < dist[v]:
-                    dist[v] = nd
-                    heapq.heappush(pq, (nd, v))
-    return dist
-
-def bfs_centros_cercanos(inicio_id):
-    visitados = [False] * len(centros)
-    cola = [inicio_id]
-    visitados[inicio_id] = True
-    resultado = []
-    while cola:
-        u = cola.pop(0)
-        resultado.append(centros[u]["nombre"])
-        for v in range(len(grafo)):
-            if grafo[u][v] > 0 and not visitados[v]:
-                visitados[v] = True
-                cola.append(v)
-    return resultado
-
-def dfs_explorar_rutas(u, visitados):
-    visitados[u] = True
-    print(f"-> Explorando: {centros[u]['nombre']}")
-    for v in range(len(grafo)):
-        if grafo[u][v] > 0 and not visitados[v]:
-            dfs_explorar_rutas(v, visitados)
-            
-class NodoArbol:
-    def __init__(self, nombre):
-        self.nombre = nombre
-        self.hijos = []
-
+# ======================================================
+# CENTROS Y GRAFO
+# ======================================================
 def cargar_centros():
     centros.clear()
-    if os.path.exists(CENTROS_FILE):
-        with open(CENTROS_FILE, "r") as f:
-            for l in f:
-                if l.strip():
-                    i, n, r = l.strip().split(",")
-                    centros.append({"id": int(i), "nombre": n, "region": r})
+    with open(CENTROS_FILE) as f:
+        for l in f:
+            if l.strip():
+                i,n,r=l.strip().split(",")
+                centros.append({"id":int(i),"nombre":n,"region":r})
 
-def construir_arbol_regiones():
-    raiz = NodoArbol("Ecuador")
-    regiones = {}
+def guardar_centros():
+    with open(CENTROS_FILE,"w") as f:
+        for c in centros:
+            f.write(f"{c['id']},{c['nombre']},{c['region']}\n")
+
+def cargar_grafo():
+    global grafo
+    n=len(centros)
+    grafo=[[0]*n for _ in range(n)]
+    with open(RUTAS_FILE) as f:
+        for l in f:
+            if l.strip():
+                a,b,c=map(int,l.strip().split(","))
+                if a<n and b<n:
+                    grafo[a][b]=c; grafo[b][a]=c
+
+# ======================================================
+# DIJKSTRA
+# ======================================================
+def dijkstra(origen):
+    n=len(grafo)
+    dist=[float("inf")]*n
+    prev=[None]*n
+    dist[origen]=0
+    pq=[(0,origen)]
+    while pq:
+        costo,u=heapq.heappop(pq)
+        for v in range(n):
+            if grafo[u][v]>0:
+                nd=costo+grafo[u][v]
+                if nd<dist[v]:
+                    dist[v]=nd; prev[v]=u
+                    heapq.heappush(pq,(nd,v))
+    return dist,prev
+
+def reconstruir(prev,d):
+    ruta=[]
+    while d is not None:
+        ruta.append(d); d=prev[d]
+    return ruta[::-1]
+
+# ======================================================
+# BFS DFS
+# ======================================================
+def bfs(i):
+    if i<0 or i>=len(centros):
+        return ["ID inválido"]
+    vis=[False]*len(centros)
+    cola=[i]; vis[i]=True
+    res=[]
+    while cola:
+        u=cola.pop(0)
+        res.append(centros[u]["nombre"])
+        for v in range(len(grafo)):
+            if grafo[u][v]>0 and not vis[v]:
+                vis[v]=True; cola.append(v)
+    return res
+
+def dfs(u,vis):
+    vis[u]=True
+    print(centros[u]["nombre"])
+    for v in range(len(grafo)):
+        if grafo[u][v]>0 and not vis[v]:
+            dfs(v,vis)
+
+# ======================================================
+# ÁRBOL
+# ======================================================
+class NodoArbol:
+    def __init__(self,n):
+        self.nombre=n; self.hijos=[]
+
+def construir_arbol():
+    raiz=NodoArbol("Ecuador"); regs={}
     for c in centros:
-        reg = c["region"]
-        if reg not in regiones:
-            nodo_reg = NodoArbol(reg)
-            raiz.hijos.append(nodo_reg)
-            regiones[reg] = nodo_reg
-        regiones[reg].hijos.append(NodoArbol(c["nombre"]))
+        r=c["region"]
+        if r not in regs:
+            nodo=NodoArbol(r)
+            raiz.hijos.append(nodo)
+            regs[r]=nodo
+        regs[r].hijos.append(NodoArbol(c["nombre"]))
     return raiz
 
-def mostrar_arbol(nodo, nivel=0):
-    print("  " * nivel + "|--" + nodo.nombre)
-    for hijo in nodo.hijos:
-        mostrar_arbol(hijo, nivel + 1)
+def mostrar_arbol(n,l=0):
+    print("  "*l+"|--"+n.nombre)
+    for h in n.hijos:
+        mostrar_arbol(h,l+1)
 
-def quick_sort_centros(lista):
-    if len(lista) <= 1:
-        return lista
-    pivote = lista[len(lista) // 2]["nombre"]
-    izq = [x for x in lista if x["nombre"] < pivote]
-    medio = [x for x in lista if x["nombre"] == pivote]
-    der = [x for x in lista if x["nombre"] > pivote]
-    return quick_sort_centros(izq) + medio + quick_sort_centros(der)            
+# ======================================================
+# ADMIN
+# ======================================================
+def menu_admin():
+    while True:
+        print("\n--- ADMIN ---")
+        print("1 Agregar Centro\n2 Agregar Ruta\n3 Listar Centros\n4 DFS\n0 Salir")
+        op=input("Opción: ")
+
+        if op=="1":
+            n=input("Nombre: "); r=input("Región: ")
+            centros.append({"id":len(centros),"nombre":n,"region":r})
+            guardar_centros(); cargar_grafo()
+
+        elif op=="2":
+            if not centros:
+                print("No hay centros"); continue
+            for c in centros: print(c["id"],c["nombre"])
+            try:
+                a=int(input("Origen ID: "))
+                b=int(input("Destino ID: "))
+                c=int(input("Costo: "))
+                if 0<=a<len(centros) and 0<=b<len(centros):
+                    with open(RUTAS_FILE,"a") as f:
+                        f.write(f"{a},{b},{c}\n")
+                    cargar_grafo()
+                else:
+                    print("IDs inválidos")
+            except:
+                print("Entrada inválida")
+
+        elif op=="3":
+            for c in centros:
+                print(c["id"],c["nombre"],c["region"])
+
+        elif op=="4":
+            if centros:
+                dfs(0,[False]*len(centros))
+
+        elif op=="0": break
+
+# ======================================================
+# CLIENTE
+# ======================================================
+def menu_cliente(user):
+    seleccion=[]
+    while True:
+        print("\n1 Árbol\n2 Ruta Óptima\n3 BFS\n4 Agregar Centro a Ruta\n5 Ver Ruta Seleccionada\n0 Salir")
+        op=input("Opción: ")
+
+        if op=="1":
+            mostrar_arbol(construir_arbol())
+
+        elif op=="2":
+            try:
+                o=int(input("Origen ID: "))
+                d=int(input("Destino ID: "))
+                if 0<=o<len(centros) and 0<=d<len(centros):
+                    dist,prev=dijkstra(o)
+                    print("Ruta:",[centros[i]["nombre"] for i in reconstruir(prev,d)])
+                    print("Costo:",dist[d])
+                else:
+                    print("IDs inválidos")
+            except:
+                print("Error de entrada")
+
+        elif op=="3":
+            print(bfs(int(input("ID centro: "))))
+
+        elif op=="4":
+            try:
+                i=int(input("ID centro: "))
+                if 0<=i<len(centros):
+                    seleccion.append(i)
+            except:
+                print("ID inválido")
+
+        elif op=="5":
+            if len(seleccion)<2:
+                print("Seleccione al menos 2 centros"); continue
+            total=0
+            for i in range(len(seleccion)-1):
+                dist,_=dijkstra(seleccion[i])
+                total+=dist[seleccion[i+1]]
+            print("Ruta:",[centros[i]["nombre"] for i in seleccion])
+            print("Costo total (óptimo):",total)
+
+        elif op=="0": break
+
+# ======================================================
+# MAIN
+# ======================================================
+inicializar_archivos()
+cargar_centros()
+cargar_grafo()
+
+while True:
+    print("\n=== POLIDELIVERY ===")
+    op=input("1 Registrar\n2 Login\n0 Salir\n")
+    if op=="1": registrar()
+    elif op=="2":
+        rol,u=login()
+        if rol=="admin": menu_admin()
+        elif rol=="cliente": menu_cliente(u)
+    elif op=="0": break
