@@ -40,21 +40,28 @@ def password_segura(p):
     return any(c.islower() for c in p) and any(c.isupper() for c in p) and any(c.isdigit() for c in p)
 
 def registrar():
+    print("\n--- REGISTRO ---")
     n=input("Nombres: "); a=input("Apellidos: ")
     c=input("ID: "); e=input("Edad: ")
     u=input("Usuario: "); p=input("Contraseña: ")
     if not password_segura(p):
-        print("Contraseña insegura"); return
+        print("❌ Contraseña insegura"); return
     with open(USUARIOS_FILE,"a") as f:
         f.write(f"{n},{a},{c},{e},{u},{p},cliente\n")
+    print("✅ Registrado correctamente")
 
 def login():
     cargar_usuarios()
-    u=input("Usuario: "); p=input("Pass: ")
+    u=input("Usuario: ")
+    p=input("Pass: ")
+
     for us in usuarios:
-        if us["user"]==u and us["pass"]==p:
-            return us["rol"],u
-    return None,None
+        if us["user"] == u and us["pass"] == p:
+            print("✅ Inicio de sesión exitoso\n")
+            return us["rol"], u
+
+    print("❌ Error en los datos ingresados\n")
+    return None, None
 
 # ======================================================
 # CENTROS Y GRAFO
@@ -170,21 +177,16 @@ def menu_admin():
             guardar_centros(); cargar_grafo()
 
         elif op=="2":
-            if not centros:
-                print("No hay centros"); continue
             for c in centros: print(c["id"],c["nombre"])
             try:
                 a=int(input("Origen ID: "))
                 b=int(input("Destino ID: "))
                 c=int(input("Costo: "))
-                if 0<=a<len(centros) and 0<=b<len(centros):
-                    with open(RUTAS_FILE,"a") as f:
-                        f.write(f"{a},{b},{c}\n")
-                    cargar_grafo()
-                else:
-                    print("IDs inválidos")
+                with open(RUTAS_FILE,"a") as f:
+                    f.write(f"{a},{b},{c}\n")
+                cargar_grafo()
             except:
-                print("Entrada inválida")
+                print("❌ Error de entrada")
 
         elif op=="3":
             for c in centros:
@@ -202,7 +204,7 @@ def menu_admin():
 def menu_cliente(user):
     seleccion=[]
     while True:
-        print("\n1 Árbol\n2 Ruta Óptima\n3 BFS\n4 Agregar Centro a Ruta\n5 Ver Ruta Seleccionada\n0 Salir")
+        print("\n1 Árbol\n2 Ruta Óptima\n3 BFS\n4 Agregar Centro\n5 Ver Ruta\n0 Salir")
         op=input("Opción: ")
 
         if op=="1":
@@ -235,7 +237,7 @@ def menu_cliente(user):
 # MAIN
 # ======================================================
 inicializar_archivos()
-crear_admin_defecto()   # 👈 ADMIN AUTOMÁTICO
+crear_admin_defecto()
 cargar_centros()
 cargar_grafo()
 
@@ -248,4 +250,3 @@ while True:
         if rol=="admin": menu_admin()
         elif rol=="cliente": menu_cliente(u)
     elif op=="0": break
-
