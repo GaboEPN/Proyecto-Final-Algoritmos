@@ -1,6 +1,3 @@
-#Código completo con algoritmos..
-
-
 import os
 import heapq
 
@@ -30,6 +27,14 @@ def cargar_usuarios():
             if l.strip():
                 n,a,c,e,u,p,r=l.strip().split(",")
                 usuarios.append({"user":u,"pass":p,"rol":r})
+
+def crear_admin_defecto():
+    cargar_usuarios()
+    for u in usuarios:
+        if u["rol"]=="admin":
+            return
+    with open(USUARIOS_FILE,"a") as f:
+        f.write("Admin,Principal,0000,30,admin,Admin123,admin\n")
 
 def password_segura(p):
     return any(c.islower() for c in p) and any(c.isupper() for c in p) and any(c.isdigit() for c in p)
@@ -204,38 +209,25 @@ def menu_cliente(user):
             mostrar_arbol(construir_arbol())
 
         elif op=="2":
-            try:
-                o=int(input("Origen ID: "))
-                d=int(input("Destino ID: "))
-                if 0<=o<len(centros) and 0<=d<len(centros):
-                    dist,prev=dijkstra(o)
-                    print("Ruta:",[centros[i]["nombre"] for i in reconstruir(prev,d)])
-                    print("Costo:",dist[d])
-                else:
-                    print("IDs inválidos")
-            except:
-                print("Error de entrada")
+            o=int(input("Origen ID: "))
+            d=int(input("Destino ID: "))
+            dist,prev=dijkstra(o)
+            print("Ruta:",[centros[i]["nombre"] for i in reconstruir(prev,d)])
+            print("Costo:",dist[d])
 
         elif op=="3":
             print(bfs(int(input("ID centro: "))))
 
         elif op=="4":
-            try:
-                i=int(input("ID centro: "))
-                if 0<=i<len(centros):
-                    seleccion.append(i)
-            except:
-                print("ID inválido")
+            seleccion.append(int(input("ID centro: ")))
 
         elif op=="5":
-            if len(seleccion)<2:
-                print("Seleccione al menos 2 centros"); continue
             total=0
             for i in range(len(seleccion)-1):
                 dist,_=dijkstra(seleccion[i])
                 total+=dist[seleccion[i+1]]
             print("Ruta:",[centros[i]["nombre"] for i in seleccion])
-            print("Costo total (óptimo):",total)
+            print("Costo total:",total)
 
         elif op=="0": break
 
@@ -243,6 +235,7 @@ def menu_cliente(user):
 # MAIN
 # ======================================================
 inicializar_archivos()
+crear_admin_defecto()   # 👈 ADMIN AUTOMÁTICO
 cargar_centros()
 cargar_grafo()
 
